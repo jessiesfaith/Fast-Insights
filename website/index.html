@@ -1103,18 +1103,29 @@ footer.site-footer {
     { id: 'financials', label: 'Financials',     live: false },
     { id: 'ap',         label: 'AP Tool',        live: false }
   ];
+  var SERVICES = [
+    { id: 'ar',                 label: 'AR' },
+    { id: 'ap',                 label: 'AP' },
+    { id: 'bookkeeping',        label: 'Bookkeeping' },
+    { id: 'taxes',              label: 'Taxes' },
+    { id: 'trust_audit',        label: 'Trust audit' },
+    { id: 'system_integration', label: 'System integration' },
+    { id: 'ai_integration',     label: 'AI integration' }
+  ];
   var APP_BASE = 'https://app.fastinsights.io';
 
   var state = {
-    interest: null,       // 'tool' | 'service'
-    tool: null,           // tool id
-    contact: null,        // 'email' | 'call' | 'text'
+    interest: null,         // 'tool' | 'service'
+    tool: null,             // tool id (only for interest='tool')
+    service: null,          // service id (only for interest='service')
+    contact: null,          // 'email' | 'call' | 'text'
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
-    best_time: '',
-    additional_info: '',
+    best_time: '',          // only collected for tool+call
+    additional_info: '',    // optional, only for tool flow
+    what_to_discuss: '',    // required for service flow
     urgent: false
   };
   var pendingInput = null;
@@ -1137,9 +1148,9 @@ footer.site-footer {
   }
   function reset() {
     state = {
-      interest: null, tool: null, contact: null,
+      interest: null, tool: null, service: null, contact: null,
       first_name: '', last_name: '', email: '', phone: '',
-      best_time: '', additional_info: '', urgent: false
+      best_time: '', additional_info: '', what_to_discuss: '', urgent: false
     };
     $messages.innerHTML = '';
     $actions.innerHTML = '';
@@ -1211,7 +1222,7 @@ footer.site-footer {
     botSay("Hi! Welcome to Fast Insights. Are you looking for a tool or a service?");
     showButtons([
       { label: 'A tool',    action: function () { state.interest = 'tool';    stepToolChoice(); } },
-      { label: 'A service', action: function () { state.interest = 'service'; stepContactMethod(); } }
+      { label: 'A service', action: function () { state.interest = 'service'; stepServiceChoice(); } }
     ]);
   }
   function stepToolChoice() {
@@ -1236,6 +1247,12 @@ footer.site-footer {
     botSay('Here you go: <a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>' + note);
     showButtons([{ label: 'Start over', action: reset }]);
   }
+  function stepServiceChoice() {
+    botSay("Which service are you interested in?");
+    showButtons(SERVICES.map(function (s) {
+      return { label: s.label, action: function () { state.service = s.id; stepContactMethod(); } };
+    }));
+  }
   function stepContactMethod() {
     botSay("How would you like us to reach out?");
     showButtons([
@@ -1252,10 +1269,16 @@ footer.site-footer {
     botSay("And your last name?");
     showInput('Last name', function (v) { state.last_name = v; stepCollectContact(); });
   }
+  // After contact info is collected, service flow goes to "what to discuss"
+  // (required), tool flow goes to the existing "anything else" (optional).
+  function afterContactInfo() {
+    if (state.interest === 'service') stepWhatToDiscuss();
+    else stepAdditionalInfo();
+  }
   function stepCollectContact() {
     if (state.contact === 'email') {
       botSay("What's the best email to reach you at?");
-      showInput('you@company.com', function (v) { state.email = v; stepAdditionalInfo(); });
+      showInput('you@company.com', function (v) { state.email = v; afterContactInfo(); });
     } else {
       // call and text both need a phone number
       botSay(state.contact === 'call'
@@ -1263,20 +1286,33 @@ footer.site-footer {
         : "What's the best phone number to text?");
       showInput('+1 555 555 1212', function (v) {
         state.phone = v;
-        if (state.contact === 'call') stepBestTime();
-        else stepTextAutoReply();
+        if (state.contact === 'call') {
+          // Service-call: skip best time, go straight to "what to discuss".
+          // Tool-call: still ask best time.
+          if (state.interest === 'service') afterContactInfo();
+          else stepBestTime();
+        } else {
+          stepTextAutoReply();
+        }
       });
     }
   }
   function stepBestTime() {
     botSay("When's the best day and time to call?");
-    showInput('e.g. Monday 2pm PT', function (v) { state.best_time = v; stepAdditionalInfo(); });
+    showInput('e.g. Monday 2pm PT', function (v) { state.best_time = v; afterContactInfo(); });
   }
   function stepTextAutoReply() {
     // When Twilio is wired in, trigger an outbound SMS to state.phone here
     // saying "Thanks for reaching out — a live rep will text you shortly."
     botSay("Got it — our team will text you shortly. While you're here&hellip;");
-    stepAdditionalInfo();
+    afterContactInfo();
+  }
+  function stepWhatToDiscuss() {
+    botSay("What would you like to discuss?");
+    showInput('Tell us a bit about what you need', function (v) {
+      state.what_to_discuss = v;
+      stepLiveRepNow();
+    });
   }
   function stepAdditionalInfo() {
     botSay("Anything else you'd like to share about what you're looking for?");
@@ -1296,20 +1332,29 @@ footer.site-footer {
   function submitDemo() {
     botSay("Sending your request&hellip;");
     var tool = TOOLS.filter(function (t) { return t.id === state.tool; })[0];
+    var service = SERVICES.filter(function (s) { return s.id === state.service; })[0];
     var urgentTag = state.urgent ? '[URGENT] ' : '';
-    var interestLabel = state.interest === 'tool'
-      ? 'demo request (' + (tool ? tool.label : 'tool') + ')'
-      : 'service inquiry';
+    var interestLabel;
+    if (state.interest === 'tool') {
+      interestLabel = 'demo request (' + (tool ? tool.label : 'tool') + ')';
+    } else {
+      interestLabel = 'service inquiry (' + (service ? service.label : 'service') + ')';
+    }
     var subject = urgentTag + 'Fast Insights chat — ' + interestLabel;
 
     var bodyParts = [];
     if (state.urgent) bodyParts.push('*** URGENT — customer requested a live rep right now ***', '');
-    bodyParts.push('Interest: ' + (state.interest === 'tool' ? 'Tool — ' + (tool ? tool.label : 'unknown') : 'Service'));
+    if (state.interest === 'tool') {
+      bodyParts.push('Interest: Tool — ' + (tool ? tool.label : 'unknown'));
+    } else {
+      bodyParts.push('Interest: Service — ' + (service ? service.label : 'unknown'));
+    }
     bodyParts.push('Name: ' + state.first_name + ' ' + state.last_name);
     bodyParts.push('Contact method: ' + state.contact);
     if (state.contact === 'email') bodyParts.push('Email: ' + state.email);
     if (state.contact === 'call' || state.contact === 'text') bodyParts.push('Phone: ' + state.phone);
-    if (state.contact === 'call') bodyParts.push('Best time to call: ' + state.best_time);
+    if (state.contact === 'call' && state.best_time) bodyParts.push('Best time to call: ' + state.best_time);
+    if (state.what_to_discuss) bodyParts.push('Wants to discuss: ' + state.what_to_discuss);
     if (state.additional_info) bodyParts.push('Additional info: ' + state.additional_info);
     bodyParts.push('', 'Submitted from chatbot on fastinsights.io');
     var body = bodyParts.join('\n');
@@ -1325,8 +1370,10 @@ footer.site-footer {
           phone: state.phone,
           interest: state.interest,
           tool: tool ? tool.label : '',
+          service: service ? service.label : '',
           contact_method: state.contact,
           best_time: state.best_time,
+          what_to_discuss: state.what_to_discuss,
           additional_info: state.additional_info,
           urgent: state.urgent,
           _subject: subject
