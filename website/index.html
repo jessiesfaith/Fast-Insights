@@ -33,6 +33,9 @@
   --fi-nav-cta-text: #0a0a0a;
   --fi-cta-btn-bg: #0a0a0a;
   --fi-cta-btn-text: #fafaf7;
+
+  /* Dark-green ink used on top of the green button surfaces. Same value in both themes. */
+  --fi-on-green: #001a00;
 }
 
 [data-theme="light"] {
@@ -274,7 +277,7 @@ nav.site-nav {
   transition: opacity 0.2s, background 0.2s, border-color 0.2s, color 0.2s;
   white-space: nowrap;
 }
-.btn-primary { background: var(--fi-green); color: #001a00; }
+.btn-primary { background: var(--fi-green); color: var(--fi-on-green); }
 .btn-primary:hover { opacity: 0.9; }
 .btn-secondary { background: transparent; color: var(--fi-text); border-color: var(--fi-border-strong); }
 .btn-secondary:hover { border-color: var(--fi-accent); color: var(--fi-accent); }
@@ -430,7 +433,7 @@ section .section-header { max-width: 720px; margin-bottom: 56px; }
 
 .cta-section {
   background: var(--fi-green);
-  color: #001a00;
+  color: var(--fi-on-green);
   padding: 130px 60px;
   text-align: center;
   position: relative;
@@ -450,15 +453,15 @@ section .section-header { max-width: 720px; margin-bottom: 56px; }
 }
 .cta-section h2 {
   font-size: clamp(44px, 6vw, 76px);
-  color: #001a00;
+  color: var(--fi-on-green);
   margin-bottom: 36px;
   margin-top: 14px;
 }
 .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .btn-cta-primary { background: var(--fi-cta-btn-bg); color: var(--fi-cta-btn-text); }
 .btn-cta-primary:hover { opacity: 0.88; }
-.btn-cta-secondary { background: transparent; color: #001a00; border-color: rgba(0, 26, 0, 0.35); }
-.btn-cta-secondary:hover { border-color: #001a00; }
+.btn-cta-secondary { background: transparent; color: var(--fi-on-green); border-color: rgba(0, 26, 0, 0.35); }
+.btn-cta-secondary:hover { border-color: var(--fi-on-green); }
 .cta-phone {
   margin-top: 28px;
   font-size: 11px;
@@ -468,7 +471,7 @@ section .section-header { max-width: 720px; margin-bottom: 56px; }
   font-weight: 500;
 }
 .cta-phone a { color: rgba(0, 26, 0, 0.9); border-bottom: 1px solid rgba(0, 26, 0, 0.4); padding-bottom: 1px; }
-.cta-phone a:hover { color: #001a00; border-color: #001a00; }
+.cta-phone a:hover { color: var(--fi-on-green); border-color: var(--fi-on-green); }
 
 .estate {
   background: var(--fi-surface);
@@ -629,7 +632,7 @@ footer.site-footer {
 }
 .fi-chat-msg.user {
   background: var(--fi-accent);
-  color: #001a00;
+  color: var(--fi-on-green);
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
@@ -668,7 +671,7 @@ footer.site-footer {
 .fi-chat-input-wrap input:focus { outline: none; border-color: var(--fi-accent); }
 .fi-chat-input-wrap button {
   background: var(--fi-accent);
-  color: #001a00;
+  color: var(--fi-on-green);
   border: none;
   padding: 0 16px;
   border-radius: 8px;
