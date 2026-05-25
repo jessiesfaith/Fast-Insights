@@ -537,6 +537,148 @@ footer.site-footer {
   .about-photo .photo-caption { position: static; margin-top: 14px; text-align: center; }
   .fx-toggle { bottom: 16px; left: 16px; font-size: 9px; padding: 8px 12px; }
 }
+
+/* CHATBOT WIDGET */
+.fi-chat-bubble {
+  position: fixed; bottom: 24px; right: 24px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--fi-accent); color: var(--fi-bg);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 9998;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.fi-chat-bubble:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3); }
+.fi-chat-bubble svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fi-chat-bubble[aria-expanded="true"] { display: none; }
+
+.fi-chat-panel {
+  position: fixed; bottom: 24px; right: 24px;
+  width: 360px; max-width: calc(100vw - 32px);
+  height: 540px; max-height: calc(100vh - 100px);
+  background: var(--fi-surface);
+  border: 1px solid var(--fi-border-strong);
+  border-radius: 12px;
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  font-family: 'Outfit', sans-serif;
+}
+.fi-chat-panel[aria-hidden="false"] { display: flex; animation: fi-chat-slideup 0.25s ease; }
+@keyframes fi-chat-slideup {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.fi-chat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--fi-border);
+  background: var(--fi-elevated);
+}
+.fi-chat-header h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px; font-weight: 600;
+  margin: 0; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--fi-text);
+}
+.fi-chat-close {
+  background: none; border: none;
+  color: var(--fi-text-secondary);
+  cursor: pointer;
+  width: 28px; height: 28px; font-size: 22px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.2s;
+}
+.fi-chat-close:hover { color: var(--fi-text); }
+
+.fi-chat-messages {
+  flex: 1; overflow-y: auto;
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.fi-chat-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px; line-height: 1.5;
+  word-wrap: break-word;
+}
+.fi-chat-msg.bot {
+  background: var(--fi-elevated);
+  color: var(--fi-text);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+.fi-chat-msg.user {
+  background: var(--fi-accent);
+  color: #001a00;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.fi-chat-msg a { color: inherit; text-decoration: underline; }
+
+.fi-chat-actions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 0 18px 14px;
+}
+.fi-chat-actions button {
+  background: transparent;
+  border: 1px solid var(--fi-border-strong);
+  color: var(--fi-text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px; font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.fi-chat-actions button:hover { border-color: var(--fi-accent); color: var(--fi-accent); }
+
+.fi-chat-input-wrap {
+  display: flex; gap: 8px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--fi-border);
+}
+.fi-chat-input-wrap input {
+  flex: 1;
+  background: var(--fi-bg);
+  border: 1px solid var(--fi-border-strong);
+  color: var(--fi-text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px; font-family: 'Outfit', sans-serif;
+}
+.fi-chat-input-wrap input:focus { outline: none; border-color: var(--fi-accent); }
+.fi-chat-input-wrap button {
+  background: var(--fi-accent);
+  color: #001a00;
+  border: none;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.fi-chat-foot {
+  font-size: 9px;
+  color: var(--fi-text-tertiary);
+  text-align: center;
+  padding: 6px 14px 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .fi-chat-panel {
+    width: calc(100vw - 16px);
+    height: calc(100vh - 100px);
+    bottom: 8px; right: 8px;
+  }
+}
 </style>
 </head>
 <body>
@@ -712,6 +854,7 @@ footer.site-footer {
 <div class="cta-buttons">
 <a href="mailto:info@fastinsights.io" class="btn btn-cta-primary">Book a 20-min Intro Call</a>
 <a href="mailto:info@fastinsights.io" class="btn btn-cta-secondary">Speak with the Team</a>
+<button type="button" class="btn btn-cta-secondary" onclick="FIChat.open()">Chat with us</button>
 </div>
 <div class="cta-phone">Or call <a href="tel:+14155069949">(415) 506-9949</a></div>
 </section>
@@ -925,6 +1068,216 @@ footer.site-footer {
     fxBtn.classList.add('off');
     fxLabel.textContent = 'FX Off';
   }
+})();
+</script>
+
+<!-- ===================== CHATBOT WIDGET ===================== -->
+<button id="fi-chat-bubble" class="fi-chat-bubble" type="button" aria-label="Open chat" aria-expanded="false" onclick="FIChat.open()">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+</button>
+<div id="fi-chat-panel" class="fi-chat-panel" role="dialog" aria-label="Fast Insights chat" aria-hidden="true">
+  <div class="fi-chat-header">
+    <h3>Chat with Fast Insights</h3>
+    <button type="button" class="fi-chat-close" aria-label="Close chat" onclick="FIChat.close()">&times;</button>
+  </div>
+  <div class="fi-chat-messages" id="fi-chat-messages"></div>
+  <div class="fi-chat-actions" id="fi-chat-actions"></div>
+  <div class="fi-chat-input-wrap" id="fi-chat-input-wrap" style="display:none;">
+    <input type="text" id="fi-chat-input" aria-label="Your response">
+    <button type="button" onclick="FIChat.submitInput()">Send</button>
+  </div>
+  <div class="fi-chat-foot">Fast Insights · A modern finance team</div>
+</div>
+
+<script>
+(function () {
+  // Replace with the Formspree endpoint when the account is set up.
+  // While empty, submissions fall back to a mailto: link the user clicks.
+  var FORMSPREE_ENDPOINT = '';
+  var FALLBACK_EMAIL = 'jessica@fastinsights.io';
+
+  var TOOLS = [
+    { id: 'ar',         label: 'AR Tool',        live: true  },
+    { id: 'cashflow',   label: 'Cashflow Tool',  live: false },
+    { id: 'revrec',     label: 'Rev Rec Tool',   live: false },
+    { id: 'financials', label: 'Financials',     live: false },
+    { id: 'ap',         label: 'AP Tool',        live: false }
+  ];
+  var APP_BASE = 'https://app.fastinsights.io';
+
+  var state = { interest: null, tool: null, email: '', contact: null, time: '' };
+  var pendingInput = null;
+
+  var $bubble   = document.getElementById('fi-chat-bubble');
+  var $panel    = document.getElementById('fi-chat-panel');
+  var $messages = document.getElementById('fi-chat-messages');
+  var $actions  = document.getElementById('fi-chat-actions');
+  var $inputWrap = document.getElementById('fi-chat-input-wrap');
+  var $input    = document.getElementById('fi-chat-input');
+
+  function open() {
+    $panel.setAttribute('aria-hidden', 'false');
+    $bubble.setAttribute('aria-expanded', 'true');
+    if ($messages.children.length === 0) stepGreeting();
+  }
+  function close() {
+    $panel.setAttribute('aria-hidden', 'true');
+    $bubble.setAttribute('aria-expanded', 'false');
+  }
+  function reset() {
+    state = { interest: null, tool: null, email: '', contact: null, time: '' };
+    $messages.innerHTML = '';
+    $actions.innerHTML = '';
+    $inputWrap.style.display = 'none';
+    stepGreeting();
+  }
+
+  function botSay(html) {
+    var m = document.createElement('div');
+    m.className = 'fi-chat-msg bot';
+    m.innerHTML = html;
+    $messages.appendChild(m);
+    $messages.scrollTop = $messages.scrollHeight;
+  }
+  function userSay(text) {
+    var m = document.createElement('div');
+    m.className = 'fi-chat-msg user';
+    m.textContent = text;
+    $messages.appendChild(m);
+    $messages.scrollTop = $messages.scrollHeight;
+  }
+  function showButtons(buttons) {
+    $actions.innerHTML = '';
+    $inputWrap.style.display = 'none';
+    buttons.forEach(function (b) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = b.label;
+      btn.onclick = function () { userSay(b.label); $actions.innerHTML = ''; b.action(); };
+      $actions.appendChild(btn);
+    });
+  }
+  function showInput(placeholder, onSubmit) {
+    $actions.innerHTML = '';
+    $input.value = '';
+    $input.placeholder = placeholder || '';
+    $inputWrap.style.display = 'flex';
+    pendingInput = onSubmit;
+    setTimeout(function () { $input.focus(); }, 50);
+  }
+  function submitInput() {
+    var v = $input.value.trim();
+    if (!v || !pendingInput) return;
+    userSay(v);
+    var h = pendingInput; pendingInput = null;
+    $inputWrap.style.display = 'none';
+    h(v);
+  }
+  $input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitInput(); }
+  });
+
+  // ---------------- state machine ----------------
+  function stepGreeting() {
+    botSay("Hi! Welcome to Fast Insights. Are you looking for a tool or a service?");
+    showButtons([
+      { label: 'A tool',    action: function () { state.interest = 'tool';    stepToolChoice(); } },
+      { label: 'A service', action: function () { state.interest = 'service'; stepDemoEmail(); } }
+    ]);
+  }
+  function stepToolChoice() {
+    botSay("Which tool are you curious about?");
+    showButtons(TOOLS.map(function (t) {
+      return { label: t.label, action: function () { state.tool = t.id; stepDemoOrApp(); } };
+    }));
+  }
+  function stepDemoOrApp() {
+    botSay("Want a quick demo from a rep, or would you rather open the app and click around yourself?");
+    showButtons([
+      { label: 'Open the app',     action: stepOpenApp },
+      { label: 'Demo with a rep',  action: stepDemoEmail }
+    ]);
+  }
+  function stepOpenApp() {
+    var tool = TOOLS.filter(function (t) { return t.id === state.tool; })[0];
+    var url = (tool && tool.live) ? APP_BASE + '/' + tool.id : APP_BASE + '/';
+    var note = (tool && !tool.live)
+      ? '<br><br><em>' + tool.label + ' is on the roadmap. The link opens the tool picker where you can see what\'s live today.</em>'
+      : '';
+    botSay('Here you go: <a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>' + note);
+    showButtons([{ label: 'Start over', action: reset }]);
+  }
+  function stepDemoEmail() {
+    botSay("Got it. What's the best email for a rep to reach you at?");
+    showInput('you@company.com', function (email) {
+      state.email = email;
+      stepContactPref();
+    });
+  }
+  function stepContactPref() {
+    botSay("Would you rather we email you or give you a call?");
+    showButtons([
+      { label: 'Email me', action: function () { state.contact = 'email'; submitDemo(); } },
+      { label: 'Call me',  action: function () { state.contact = 'call';  stepCallTime(); } }
+    ]);
+  }
+  function stepCallTime() {
+    botSay("When's the best day and time to call?");
+    showInput('e.g. Monday 2pm PT', function (time) {
+      state.time = time;
+      submitDemo();
+    });
+  }
+  function submitDemo() {
+    botSay("Sending your request&hellip;");
+    var tool = TOOLS.filter(function (t) { return t.id === state.tool; })[0];
+    var subject = state.interest === 'tool'
+      ? 'Fast Insights chat — demo request (' + (tool ? tool.label : 'tool') + ')'
+      : 'Fast Insights chat — service inquiry';
+    var body =
+      'Interest: ' + (state.interest === 'tool' ? 'Tool — ' + (tool ? tool.label : 'unknown') : 'Service') + '\n' +
+      'Email: ' + state.email + '\n' +
+      'Contact preference: ' + state.contact + '\n' +
+      (state.contact === 'call' ? 'Best time: ' + state.time + '\n' : '') +
+      '\nSubmitted from chatbot on fastinsights.io';
+
+    if (FORMSPREE_ENDPOINT) {
+      fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: state.email,
+          interest: state.interest,
+          tool: tool ? tool.label : '',
+          contact: state.contact,
+          best_time: state.time,
+          _subject: subject
+        })
+      }).then(function (r) { stepThanks(r.ok, subject, body); })
+        .catch(function () { stepThanksFallback(subject, body); });
+    } else {
+      stepThanksFallback(subject, body);
+    }
+  }
+  function stepThanks(ok, subject, body) {
+    if (ok) {
+      botSay("Thanks! Your request is in — Jessica will be in touch soon.");
+    } else {
+      stepThanksFallback(subject, body);
+      return;
+    }
+    showButtons([{ label: 'Start over', action: reset }]);
+  }
+  function stepThanksFallback(subject, body) {
+    var mailto = 'mailto:' + FALLBACK_EMAIL +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(body);
+    botSay('Almost done — click below to send your details directly:<br><br>' +
+      '<a href="' + mailto + '">Send my request</a>');
+    showButtons([{ label: 'Start over', action: reset }]);
+  }
+
+  window.FIChat = { open: open, close: close, submitInput: submitInput };
 })();
 </script>
 
