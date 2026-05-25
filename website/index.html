@@ -741,7 +741,7 @@ footer.site-footer {
 <p class="sub">Bringing enterprise-grade AI to small and medium businesses. A senior fractional finance team that modernizes your books, reporting, and planning with the discipline of a CFO and the speed of AI.</p>
 <div class="credentials">20+ YEARS FINANCE LEADERSHIP · IPO READINESS · SOX · AI ADOPTION</div>
 <div class="hero-buttons">
-<button type="button" class="btn btn-primary" onclick="FIChat.openBooking()">Book a 20-min Intro Call</button>
+<button type="button" class="btn btn-primary" onclick="FIChat.openBooking()">Book a 30-min Intro Call</button>
 <a href="#services" class="btn btn-secondary">View Services</a>
 </div>
 </div>
@@ -821,7 +821,7 @@ footer.site-footer {
 <div class="card">
 <div class="num">01</div>
 <div class="lbl">FIT CALL</div>
-<div class="ttl">20 minutes. No pitch.</div>
+<div class="ttl">30 minutes. No pitch.</div>
 <div class="desc">A short conversation to see if we're a match. You ask questions. We ask questions. Either we keep going or we don't.</div>
 </div>
 <div class="card">
@@ -866,7 +866,7 @@ footer.site-footer {
 <span class="amber-badge">Now Booking · 2026</span>
 <h2>Your Financial Strategy<br>Starts Here</h2>
 <div class="cta-buttons">
-<button type="button" class="btn btn-cta-primary" onclick="FIChat.openBooking()">Book a 20-min Intro Call</button>
+<button type="button" class="btn btn-cta-primary" onclick="FIChat.openBooking()">Book a 30-min Intro Call</button>
 <button type="button" class="btn btn-cta-secondary" onclick="FIChat.openDemo()">Schedule a Demo</button>
 <button type="button" class="btn btn-cta-secondary" onclick="FIChat.open()">Chat with us</button>
 </div>
@@ -1270,7 +1270,7 @@ footer.site-footer {
     showButtons([
       { label: 'Open the app',     action: stepOpenApp },
       { label: 'Demo with a rep',  action: function () {
-        botSay("Our rep will coordinate a free 20-minute consultation. First — what's the best way to contact you?");
+        botSay("Our rep will coordinate a free 30-minute consultation. First — what's the best way to contact you?");
         stepContactMethodNoIntro();
       } }
     ]);
@@ -1454,10 +1454,10 @@ footer.site-footer {
     showButtons([{ label: 'Start over', action: reset }]);
   }
 
-  // ---------------- booking flow (Book a 20-min Intro Call button) ----------------
+  // ---------------- booking flow (Book a 30-min Intro Call button) ----------------
   function makeTimeSlots() {
     // 8:00 AM through 4:30 PM Pacific, half-hour intervals (18 slots).
-    // Each call is 20 min; the 10 min gap before the next slot is your prep time.
+    // Each call is 30 min — slots are back-to-back with no buffer.
     var slots = [];
     for (var h = 8; h <= 16; h++) {
       [0, 30].forEach(function (m) {
@@ -1508,13 +1508,13 @@ footer.site-footer {
     showButtons(TOOLS.map(function (t) {
       return { label: t.label, action: function () {
         state.tool = t.id;
-        botSay("Our rep will coordinate a free 20-minute consultation. First — what's the best way to contact you?");
+        botSay("Our rep will coordinate a free 30-minute consultation. First — what's the best way to contact you?");
         stepContactMethodNoIntro();
       } };
     }));
   }
   function stepBookingIntro() {
-    botSay("Great — let's book your free 20-minute intro call. Pick a day that works for you (Mon–Fri, 8 AM – 5 PM Pacific).");
+    botSay("Great — let's book your free 30-minute intro call. Pick a day that works for you (Mon–Fri, 8 AM – 5 PM Pacific).");
     showInput('', function (v) {
       state.booking_date = v;
       stepBookingTime();
@@ -1553,7 +1553,7 @@ footer.site-footer {
       'BOOKING REQUEST — please confirm with the customer',
       '',
       'Requested date: ' + formatDateYMD(state.booking_date),
-      'Requested time: ' + timeLabel + ' Pacific Time (20 min)',
+      'Requested time: ' + timeLabel + ' Pacific Time (30 min)',
       'Name: ' + state.first_name + ' ' + state.last_name,
       'Phone: ' + state.phone,
       '',
