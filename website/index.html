@@ -853,7 +853,7 @@ footer.site-footer {
 <h2>Your Financial Strategy<br>Starts Here</h2>
 <div class="cta-buttons">
 <button type="button" class="btn btn-cta-primary" onclick="FIChat.openBooking()">Book a 20-min Intro Call</button>
-<button type="button" class="btn btn-cta-secondary" onclick="FIChat.open()">Speak with the Team</button>
+<button type="button" class="btn btn-cta-secondary" onclick="FIChat.openDemo()">Schedule a Demo</button>
 <button type="button" class="btn btn-cta-secondary" onclick="FIChat.open()">Chat with us</button>
 </div>
 <div class="cta-phone">Or call <a href="tel:+14155069949">(415) 506-9949</a></div>
@@ -1468,6 +1468,26 @@ footer.site-footer {
       stepBookingIntro();
     }
   }
+  function openDemo() {
+    // Direct demo flow: skips "tool or service?" and "demo or open app?"
+    // — both are implied by clicking the Schedule a Demo button.
+    $panel.setAttribute('aria-hidden', 'false');
+    $bubble.setAttribute('aria-expanded', 'true');
+    if ($messages.children.length === 0) {
+      state.interest = 'tool';
+      stepDemoToolChoice();
+    }
+  }
+  function stepDemoToolChoice() {
+    botSay("Which tool would you like to see a demo of?");
+    showButtons(TOOLS.map(function (t) {
+      return { label: t.label, action: function () {
+        state.tool = t.id;
+        botSay("Our rep will coordinate a free 20-minute consultation. First — what's the best way to contact you?");
+        stepContactMethodNoIntro();
+      } };
+    }));
+  }
   function stepBookingIntro() {
     botSay("Great — let's book your free 20-minute intro call. Pick a day that works for you (Mon–Fri, 8 AM – 5 PM Pacific).");
     showInput('', function (v) {
@@ -1542,7 +1562,7 @@ footer.site-footer {
     showButtons([{ label: 'Book another time', action: function () { reset(stepBookingIntro); } }]);
   }
 
-  window.FIChat = { open: open, openBooking: openBooking, close: close, submitInput: submitInput };
+  window.FIChat = { open: open, openBooking: openBooking, openDemo: openDemo, close: close, submitInput: submitInput };
 })();
 </script>
 
