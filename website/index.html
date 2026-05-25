@@ -1093,8 +1093,8 @@ footer.site-footer {
 (function () {
   // Replace with the Formspree endpoint when the account is set up.
   // While empty, submissions fall back to a mailto: link the user clicks.
-  var FORMSPREE_ENDPOINT = '';
-  var FALLBACK_EMAIL = 'jessica@fastinsights.io';
+  var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnjrbgzp';
+  var FALLBACK_EMAIL = 'info@fastinsights.io';
 
   var TOOLS = [
     { id: 'ar',         label: 'AR Tool',        live: true  },
@@ -1261,7 +1261,7 @@ footer.site-footer {
   }
   function stepThanks(ok, subject, body) {
     if (ok) {
-      botSay("Thanks! Your request is in — Jessica will be in touch soon.");
+      botSay("Thanks! Your request is in — we'll be in touch soon.");
     } else {
       stepThanksFallback(subject, body);
       return;
