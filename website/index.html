@@ -1105,7 +1105,18 @@ footer.site-footer {
   ];
   var APP_BASE = 'https://app.fastinsights.io';
 
-  var state = { interest: null, tool: null, email: '', contact: null, time: '' };
+  var state = {
+    interest: null,       // 'tool' | 'service'
+    tool: null,           // tool id
+    contact: null,        // 'email' | 'call' | 'text'
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    best_time: '',
+    additional_info: '',
+    urgent: false
+  };
   var pendingInput = null;
 
   var $bubble   = document.getElementById('fi-chat-bubble');
@@ -1125,7 +1136,11 @@ footer.site-footer {
     $bubble.setAttribute('aria-expanded', 'false');
   }
   function reset() {
-    state = { interest: null, tool: null, email: '', contact: null, time: '' };
+    state = {
+      interest: null, tool: null, contact: null,
+      first_name: '', last_name: '', email: '', phone: '',
+      best_time: '', additional_info: '', urgent: false
+    };
     $messages.innerHTML = '';
     $actions.innerHTML = '';
     $inputWrap.style.display = 'none';
@@ -1157,8 +1172,22 @@ footer.site-footer {
       $actions.appendChild(btn);
     });
   }
-  function showInput(placeholder, onSubmit) {
+  function showInput(placeholder, onSubmit, opts) {
+    opts = opts || {};
     $actions.innerHTML = '';
+    if (opts.skipLabel) {
+      var skipBtn = document.createElement('button');
+      skipBtn.type = 'button';
+      skipBtn.textContent = opts.skipLabel;
+      skipBtn.onclick = function () {
+        userSay('(skipped)');
+        pendingInput = null;
+        $inputWrap.style.display = 'none';
+        $actions.innerHTML = '';
+        if (opts.onSkip) opts.onSkip();
+      };
+      $actions.appendChild(skipBtn);
+    }
     $input.value = '';
     $input.placeholder = placeholder || '';
     $inputWrap.style.display = 'flex';
@@ -1182,7 +1211,7 @@ footer.site-footer {
     botSay("Hi! Welcome to Fast Insights. Are you looking for a tool or a service?");
     showButtons([
       { label: 'A tool',    action: function () { state.interest = 'tool';    stepToolChoice(); } },
-      { label: 'A service', action: function () { state.interest = 'service'; stepDemoEmail(); } }
+      { label: 'A service', action: function () { state.interest = 'service'; stepContactMethod(); } }
     ]);
   }
   function stepToolChoice() {
@@ -1195,7 +1224,7 @@ footer.site-footer {
     botSay("Want a quick demo from a rep, or would you rather open the app and click around yourself?");
     showButtons([
       { label: 'Open the app',     action: stepOpenApp },
-      { label: 'Demo with a rep',  action: stepDemoEmail }
+      { label: 'Demo with a rep',  action: stepContactMethod }
     ]);
   }
   function stepOpenApp() {
@@ -1207,50 +1236,99 @@ footer.site-footer {
     botSay('Here you go: <a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>' + note);
     showButtons([{ label: 'Start over', action: reset }]);
   }
-  function stepDemoEmail() {
-    botSay("Got it. What's the best email for a rep to reach you at?");
-    showInput('you@company.com', function (email) {
-      state.email = email;
-      stepContactPref();
-    });
-  }
-  function stepContactPref() {
-    botSay("Would you rather we email you or give you a call?");
+  function stepContactMethod() {
+    botSay("How would you like us to reach out?");
     showButtons([
-      { label: 'Email me', action: function () { state.contact = 'email'; submitDemo(); } },
-      { label: 'Call me',  action: function () { state.contact = 'call';  stepCallTime(); } }
+      { label: 'Email me', action: function () { state.contact = 'email'; stepFirstName(); } },
+      { label: 'Call me',  action: function () { state.contact = 'call';  stepFirstName(); } },
+      { label: 'Text me',  action: function () { state.contact = 'text';  stepFirstName(); } }
     ]);
   }
-  function stepCallTime() {
+  function stepFirstName() {
+    botSay("What's your first name?");
+    showInput('First name', function (v) { state.first_name = v; stepLastName(); });
+  }
+  function stepLastName() {
+    botSay("And your last name?");
+    showInput('Last name', function (v) { state.last_name = v; stepCollectContact(); });
+  }
+  function stepCollectContact() {
+    if (state.contact === 'email') {
+      botSay("What's the best email to reach you at?");
+      showInput('you@company.com', function (v) { state.email = v; stepAdditionalInfo(); });
+    } else {
+      // call and text both need a phone number
+      botSay(state.contact === 'call'
+        ? "What's the best phone number to call?"
+        : "What's the best phone number to text?");
+      showInput('+1 555 555 1212', function (v) {
+        state.phone = v;
+        if (state.contact === 'call') stepBestTime();
+        else stepTextAutoReply();
+      });
+    }
+  }
+  function stepBestTime() {
     botSay("When's the best day and time to call?");
-    showInput('e.g. Monday 2pm PT', function (time) {
-      state.time = time;
-      submitDemo();
-    });
+    showInput('e.g. Monday 2pm PT', function (v) { state.best_time = v; stepAdditionalInfo(); });
+  }
+  function stepTextAutoReply() {
+    // When Twilio is wired in, trigger an outbound SMS to state.phone here
+    // saying "Thanks for reaching out — a live rep will text you shortly."
+    botSay("Got it — our team will text you shortly. While you're here&hellip;");
+    stepAdditionalInfo();
+  }
+  function stepAdditionalInfo() {
+    botSay("Anything else you'd like to share about what you're looking for?");
+    showInput(
+      'Add any extra context (optional)',
+      function (v) { state.additional_info = v; stepLiveRepNow(); },
+      { skipLabel: 'Skip', onSkip: function () { state.additional_info = ''; stepLiveRepNow(); } }
+    );
+  }
+  function stepLiveRepNow() {
+    botSay("One last thing — would you like a live rep to reach out right now?");
+    showButtons([
+      { label: 'Yes, urgent',          action: function () { state.urgent = true;  submitDemo(); } },
+      { label: 'No, regular follow-up', action: function () { state.urgent = false; submitDemo(); } }
+    ]);
   }
   function submitDemo() {
     botSay("Sending your request&hellip;");
     var tool = TOOLS.filter(function (t) { return t.id === state.tool; })[0];
-    var subject = state.interest === 'tool'
-      ? 'Fast Insights chat — demo request (' + (tool ? tool.label : 'tool') + ')'
-      : 'Fast Insights chat — service inquiry';
-    var body =
-      'Interest: ' + (state.interest === 'tool' ? 'Tool — ' + (tool ? tool.label : 'unknown') : 'Service') + '\n' +
-      'Email: ' + state.email + '\n' +
-      'Contact preference: ' + state.contact + '\n' +
-      (state.contact === 'call' ? 'Best time: ' + state.time + '\n' : '') +
-      '\nSubmitted from chatbot on fastinsights.io';
+    var urgentTag = state.urgent ? '[URGENT] ' : '';
+    var interestLabel = state.interest === 'tool'
+      ? 'demo request (' + (tool ? tool.label : 'tool') + ')'
+      : 'service inquiry';
+    var subject = urgentTag + 'Fast Insights chat — ' + interestLabel;
+
+    var bodyParts = [];
+    if (state.urgent) bodyParts.push('*** URGENT — customer requested a live rep right now ***', '');
+    bodyParts.push('Interest: ' + (state.interest === 'tool' ? 'Tool — ' + (tool ? tool.label : 'unknown') : 'Service'));
+    bodyParts.push('Name: ' + state.first_name + ' ' + state.last_name);
+    bodyParts.push('Contact method: ' + state.contact);
+    if (state.contact === 'email') bodyParts.push('Email: ' + state.email);
+    if (state.contact === 'call' || state.contact === 'text') bodyParts.push('Phone: ' + state.phone);
+    if (state.contact === 'call') bodyParts.push('Best time to call: ' + state.best_time);
+    if (state.additional_info) bodyParts.push('Additional info: ' + state.additional_info);
+    bodyParts.push('', 'Submitted from chatbot on fastinsights.io');
+    var body = bodyParts.join('\n');
 
     if (FORMSPREE_ENDPOINT) {
       fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          first_name: state.first_name,
+          last_name: state.last_name,
           email: state.email,
+          phone: state.phone,
           interest: state.interest,
           tool: tool ? tool.label : '',
-          contact: state.contact,
-          best_time: state.time,
+          contact_method: state.contact,
+          best_time: state.best_time,
+          additional_info: state.additional_info,
+          urgent: state.urgent,
           _subject: subject
         })
       }).then(function (r) { stepThanks(r.ok, subject, body); })
@@ -1260,12 +1338,18 @@ footer.site-footer {
     }
   }
   function stepThanks(ok, subject, body) {
-    if (ok) {
-      botSay("Thanks! Your request is in — we'll be in touch soon.");
-    } else {
-      stepThanksFallback(subject, body);
-      return;
+    if (!ok) { stepThanksFallback(subject, body); return; }
+    var msg;
+    if (state.urgent) {
+      msg = "Thanks! Flagged as urgent — we'll reach out as soon as possible.";
+    } else if (state.contact === 'email') {
+      msg = "Thanks! We'll email you shortly.";
+    } else if (state.contact === 'call') {
+      msg = "Thanks! We'll call you at the time you specified.";
+    } else { // text
+      msg = "Thanks! Our team will text you shortly.";
     }
+    botSay(msg);
     showButtons([{ label: 'Start over', action: reset }]);
   }
   function stepThanksFallback(subject, body) {
