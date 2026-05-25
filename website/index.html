@@ -852,7 +852,7 @@ footer.site-footer {
 <span class="amber-badge">Now Booking · 2026</span>
 <h2>Your Financial Strategy<br>Starts Here</h2>
 <div class="cta-buttons">
-<a href="mailto:info@fastinsights.io" class="btn btn-cta-primary">Book a 20-min Intro Call</a>
+<button type="button" class="btn btn-cta-primary" onclick="FIChat.openBooking()">Book a 20-min Intro Call</button>
 <a href="mailto:info@fastinsights.io" class="btn btn-cta-secondary">Speak with the Team</a>
 <button type="button" class="btn btn-cta-secondary" onclick="FIChat.open()">Chat with us</button>
 </div>
@@ -1115,7 +1115,7 @@ footer.site-footer {
   var APP_BASE = 'https://app.fastinsights.io';
 
   var state = {
-    interest: null,         // 'tool' | 'service'
+    interest: null,         // 'tool' | 'service' | 'booking'
     tool: null,             // tool id (only for interest='tool')
     service: null,          // service id (only for interest='service')
     contact: null,          // 'email' | 'call' | 'text'
@@ -1126,6 +1126,8 @@ footer.site-footer {
     best_time: '',          // only collected for tool+call
     additional_info: '',    // optional, only for tool flow
     what_to_discuss: '',    // required for service flow
+    booking_date: '',       // YYYY-MM-DD, only for booking flow
+    booking_time: '',       // HH:MM (24h), only for booking flow
     urgent: false
   };
   var pendingInput = null;
@@ -1146,16 +1148,17 @@ footer.site-footer {
     $panel.setAttribute('aria-hidden', 'true');
     $bubble.setAttribute('aria-expanded', 'false');
   }
-  function reset() {
+  function reset(initialStep) {
     state = {
       interest: null, tool: null, service: null, contact: null,
       first_name: '', last_name: '', email: '', phone: '',
-      best_time: '', additional_info: '', what_to_discuss: '', urgent: false
+      best_time: '', additional_info: '', what_to_discuss: '',
+      booking_date: '', booking_time: '', urgent: false
     };
     $messages.innerHTML = '';
     $actions.innerHTML = '';
     $inputWrap.style.display = 'none';
-    stepGreeting();
+    (initialStep || stepGreeting)();
   }
 
   function botSay(html) {
@@ -1183,6 +1186,7 @@ footer.site-footer {
       $actions.appendChild(btn);
     });
   }
+  var pendingInputDisplay = null;  // optional formatter for the user-side message bubble
   function showInput(placeholder, onSubmit, opts) {
     opts = opts || {};
     $actions.innerHTML = '';
@@ -1193,23 +1197,28 @@ footer.site-footer {
       skipBtn.onclick = function () {
         userSay('(skipped)');
         pendingInput = null;
+        pendingInputDisplay = null;
         $inputWrap.style.display = 'none';
         $actions.innerHTML = '';
         if (opts.onSkip) opts.onSkip();
       };
       $actions.appendChild(skipBtn);
     }
+    $input.type = opts.inputType || 'text';
+    if (opts.inputType === 'date' && opts.min) $input.min = opts.min;
+    else $input.removeAttribute('min');
     $input.value = '';
     $input.placeholder = placeholder || '';
     $inputWrap.style.display = 'flex';
     pendingInput = onSubmit;
+    pendingInputDisplay = opts.displayFormat || null;
     setTimeout(function () { $input.focus(); }, 50);
   }
   function submitInput() {
     var v = $input.value.trim();
     if (!v || !pendingInput) return;
-    userSay(v);
-    var h = pendingInput; pendingInput = null;
+    userSay(pendingInputDisplay ? pendingInputDisplay(v) : v);
+    var h = pendingInput; pendingInput = null; pendingInputDisplay = null;
     $inputWrap.style.display = 'none';
     h(v);
   }
@@ -1235,7 +1244,19 @@ footer.site-footer {
     botSay("Want a quick demo from a rep, or would you rather open the app and click around yourself?");
     showButtons([
       { label: 'Open the app',     action: stepOpenApp },
-      { label: 'Demo with a rep',  action: stepContactMethod }
+      { label: 'Demo with a rep',  action: function () {
+        botSay("Our rep will coordinate a free 20-minute consultation. First — what's the best way to contact you?");
+        stepContactMethodNoIntro();
+      } }
+    ]);
+  }
+  // Same as stepContactMethod but skips the "How would you like us to reach out?"
+  // intro line — used when a caller already framed the contact question.
+  function stepContactMethodNoIntro() {
+    showButtons([
+      { label: 'Email me', action: function () { state.contact = 'email'; stepFirstName(); } },
+      { label: 'Call me',  action: function () { state.contact = 'call';  stepFirstName(); } },
+      { label: 'Text me',  action: function () { state.contact = 'text';  stepFirstName(); } }
     ]);
   }
   function stepOpenApp() {
@@ -1408,7 +1429,120 @@ footer.site-footer {
     showButtons([{ label: 'Start over', action: reset }]);
   }
 
-  window.FIChat = { open: open, close: close, submitInput: submitInput };
+  // ---------------- booking flow (Book a 20-min Intro Call button) ----------------
+  function makeTimeSlots() {
+    // 8:00 AM through 4:30 PM Pacific, half-hour intervals (18 slots).
+    // Each call is 20 min; the 10 min gap before the next slot is your prep time.
+    var slots = [];
+    for (var h = 8; h <= 16; h++) {
+      [0, 30].forEach(function (m) {
+        var hh = h % 12 === 0 ? 12 : h % 12;
+        var ap = h >= 12 ? 'PM' : 'AM';
+        var mm = m === 0 ? '00' : '30';
+        var id = (h < 10 ? '0' + h : '' + h) + ':' + mm;
+        slots.push({ id: id, label: hh + ':' + mm + ' ' + ap });
+      });
+    }
+    return slots;
+  }
+  function formatDateYMD(ymd) {
+    if (!ymd) return '';
+    var parts = ymd.split('-');
+    if (parts.length !== 3) return ymd;
+    var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    if (isNaN(d.getTime())) return ymd;
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function todayYMD() {
+    var d = new Date();
+    var mm = d.getMonth() + 1;
+    var dd = d.getDate();
+    return d.getFullYear() + '-' + (mm < 10 ? '0' + mm : mm) + '-' + (dd < 10 ? '0' + dd : dd);
+  }
+
+  function openBooking() {
+    $panel.setAttribute('aria-hidden', 'false');
+    $bubble.setAttribute('aria-expanded', 'true');
+    if ($messages.children.length === 0) {
+      state.interest = 'booking';
+      stepBookingIntro();
+    }
+  }
+  function stepBookingIntro() {
+    botSay("Great — let's book your free 20-minute intro call. Pick a day that works for you (Mon–Fri, 8 AM – 5 PM Pacific).");
+    showInput('', function (v) {
+      state.booking_date = v;
+      stepBookingTime();
+    }, { inputType: 'date', min: todayYMD(), displayFormat: formatDateYMD });
+  }
+  function stepBookingTime() {
+    botSay("And what time on " + formatDateYMD(state.booking_date) + "? (All times Pacific.)");
+    var slots = makeTimeSlots();
+    showButtons(slots.map(function (slot) {
+      return {
+        label: slot.label,
+        action: function () { state.booking_time = slot.id; stepBookingFirstName(); }
+      };
+    }));
+  }
+  function stepBookingFirstName() {
+    botSay("Got it. What's your first name?");
+    showInput('First name', function (v) { state.first_name = v; stepBookingLastName(); });
+  }
+  function stepBookingLastName() {
+    botSay("And your last name?");
+    showInput('Last name', function (v) { state.last_name = v; stepBookingPhone(); });
+  }
+  function stepBookingPhone() {
+    botSay("What's the best phone number to call you on?");
+    showInput('+1 555 555 1212', function (v) { state.phone = v; submitBooking(); });
+  }
+  function submitBooking() {
+    botSay("Sending your booking request&hellip;");
+    // Format the chosen time slot back to 12-hour with AM/PM
+    var slot = makeTimeSlots().filter(function (s) { return s.id === state.booking_time; })[0];
+    var timeLabel = slot ? slot.label : state.booking_time;
+    var subject = 'Fast Insights — call booking request: ' +
+      formatDateYMD(state.booking_date) + ' at ' + timeLabel + ' PT';
+    var body = [
+      'BOOKING REQUEST — please confirm with the customer',
+      '',
+      'Requested date: ' + formatDateYMD(state.booking_date),
+      'Requested time: ' + timeLabel + ' Pacific Time (20 min)',
+      'Name: ' + state.first_name + ' ' + state.last_name,
+      'Phone: ' + state.phone,
+      '',
+      'Submitted from chatbot on fastinsights.io'
+    ].join('\n');
+
+    if (FORMSPREE_ENDPOINT) {
+      fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: state.first_name,
+          last_name: state.last_name,
+          phone: state.phone,
+          booking_date: state.booking_date,
+          booking_date_label: formatDateYMD(state.booking_date),
+          booking_time: state.booking_time,
+          booking_time_label: timeLabel + ' PT',
+          interest: 'booking',
+          _subject: subject
+        })
+      }).then(function (r) { stepBookingThanks(r.ok, subject, body); })
+        .catch(function () { stepThanksFallback(subject, body); });
+    } else {
+      stepThanksFallback(subject, body);
+    }
+  }
+  function stepBookingThanks(ok, subject, body) {
+    if (!ok) { stepThanksFallback(subject, body); return; }
+    botSay("Thanks! Your request is in. We'll confirm your slot shortly by phone or email — note this is a booking <em>request</em>, not a confirmed slot, since we double-check availability before we lock it in.");
+    showButtons([{ label: 'Book another time', action: function () { reset(stepBookingIntro); } }]);
+  }
+
+  window.FIChat = { open: open, openBooking: openBooking, close: close, submitInput: submitInput };
 })();
 </script>
 
