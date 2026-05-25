@@ -585,6 +585,20 @@ footer.site-footer {
   margin: 0; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--fi-text);
 }
+.fi-chat-header-actions {
+  display: flex; align-items: center; gap: 4px;
+}
+.fi-chat-reset {
+  background: none; border: 1px solid var(--fi-border-strong);
+  color: var(--fi-text-secondary);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px; font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
+}
+.fi-chat-reset:hover { border-color: var(--fi-accent); color: var(--fi-accent); }
 .fi-chat-close {
   background: none; border: none;
   color: var(--fi-text-secondary);
@@ -1078,7 +1092,10 @@ footer.site-footer {
 <div id="fi-chat-panel" class="fi-chat-panel" role="dialog" aria-label="Fast Insights chat" aria-hidden="true">
   <div class="fi-chat-header">
     <h3>Chat with Fast Insights</h3>
-    <button type="button" class="fi-chat-close" aria-label="Close chat" onclick="FIChat.close()">&times;</button>
+    <div class="fi-chat-header-actions">
+      <button type="button" class="fi-chat-reset" aria-label="Start over" onclick="FIChat.reset()">Start over</button>
+      <button type="button" class="fi-chat-close" aria-label="Close chat" onclick="FIChat.close()">&times;</button>
+    </div>
   </div>
   <div class="fi-chat-messages" id="fi-chat-messages"></div>
   <div class="fi-chat-actions" id="fi-chat-actions"></div>
@@ -1144,11 +1161,14 @@ footer.site-footer {
     $bubble.setAttribute('aria-expanded', 'true');
     if ($messages.children.length === 0) stepGreeting();
   }
+  // close ends the conversation: panel hidden + state wiped + messages cleared
+  // so the next time the user opens (via any entry point) it starts fresh.
   function close() {
     $panel.setAttribute('aria-hidden', 'true');
     $bubble.setAttribute('aria-expanded', 'false');
+    clearChat();
   }
-  function reset(initialStep) {
+  function clearChat() {
     state = {
       interest: null, tool: null, service: null, contact: null,
       first_name: '', last_name: '', email: '', phone: '',
@@ -1158,6 +1178,11 @@ footer.site-footer {
     $messages.innerHTML = '';
     $actions.innerHTML = '';
     $inputWrap.style.display = 'none';
+    pendingInput = null;
+    pendingInputDisplay = null;
+  }
+  function reset(initialStep) {
+    clearChat();
     (initialStep || stepGreeting)();
   }
 
@@ -1562,7 +1587,7 @@ footer.site-footer {
     showButtons([{ label: 'Book another time', action: function () { reset(stepBookingIntro); } }]);
   }
 
-  window.FIChat = { open: open, openBooking: openBooking, openDemo: openDemo, close: close, submitInput: submitInput };
+  window.FIChat = { open: open, openBooking: openBooking, openDemo: openDemo, close: close, reset: reset, submitInput: submitInput };
 })();
 </script>
 
