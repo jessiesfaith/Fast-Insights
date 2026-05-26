@@ -1,1 +1,15 @@
+# Vercel
 .vercel
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Obsidian vault (per-user note-taking state, not application code)
+.obsidian/
