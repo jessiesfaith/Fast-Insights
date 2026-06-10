@@ -702,9 +702,9 @@ footer.site-footer {
 
 <canvas id="confetti-canvas" aria-hidden="true"></canvas>
 
-<button class="fx-toggle" id="fx-toggle" type="button" aria-label="Toggle confetti effect">
+<button class="fx-toggle off" id="fx-toggle" type="button" aria-label="Toggle confetti effect">
 <span class="dot"></span>
-<span class="label">FX On</span>
+<span class="label">FX Off</span>
 </button>
 
 <nav class="site-nav">
@@ -1013,7 +1013,7 @@ footer.site-footer {
   var lastMouseX = null, lastMouseY = null;
   var lastSpawn = 0;
   var SPAWN_INTERVAL_MS = 16;
-  var enabled = true;
+  var enabled = false;
 
   function spawnFromMouse(x, y) {
     if (!enabled) return;
